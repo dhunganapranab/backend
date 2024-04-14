@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
     fullname:{
         type:String, 
         required:true,
-        trim:true
     },
 
     email:{
@@ -19,9 +18,15 @@ const userSchema = new mongoose.Schema({
         trim:true
     },
 
+    role:{
+        type:String,
+        required:true,
+        trim:true
+    },
+    
     dateOfBirth :{
-        type: String,
-        required: true
+        type:String,
+        required:true
     }
 })
 
