@@ -19,6 +19,7 @@ userrouter.post("/changepassword",UserController.changeUserPassword);
 userrouter.post("/joinevent",UserController.joinEvent);
 userrouter.get("/:userId/myevent",UserController.getMyEvent);
 userrouter.get("/createdEvent/:userId",UserController.createdEventDetails);
+userrouter.post("/initiateEmergency",UserController.initiateEmergency);
 userrouter.post("/tokenIsValid",async(req,res) => {
 try {
     const token = req.header('userToken');

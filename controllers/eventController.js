@@ -128,23 +128,24 @@ class EventController{
     static getRouteDetails = async(req, res) => {
       const eventId = req.params.eventId;
 
-  try {
-    // Find the event by its ID
-    const event = await EventModel.findById(eventId);
+      try {
+        // Find the event by its ID
+        const event = await EventModel.findById(eventId);
 
-    if (!event) {
-      // If event not found, return 404 Not Found
-      return res.status(404).json({ error: 'Event not found' });
-    }
+        if (!event) {
+          // If event not found, return 404 Not Found
+          return res.status(404).json({ error: 'Event not found' });
+        }
 
-    // Extract and return the route details from the event
-    const routeDetails = event.routeDetails;
-    res.status(200).json(routeDetails);
-  } catch (error) {
-    console.error('Error fetching route details:', error);
-    res.status(500).json({ error: 'Internal server error' });
+        // Extract and return the route details from the event
+        const routeDetails = event.routeDetails;
+        res.status(200).json(routeDetails);
+      } catch (error) {
+        console.error('Error fetching route details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
   }
-    }
+
 }
 
 export default EventController;

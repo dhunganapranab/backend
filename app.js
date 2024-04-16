@@ -8,6 +8,7 @@ import eventrouter from './routes/eventRoutes.js';
 import {createServer} from 'http';
 import {Server} from 'socket.io';
 import chatrouter from './routes/messageRoute.js';
+import notificationRouter from './routes/notificationRoutes.js';
 import MessageModel from './models/Message.js';
 
 
@@ -30,6 +31,7 @@ app.use(express.json());
 app.use("/api/user",userrouter);
 app.use("/api/events",eventrouter);
 app.use("/api/chat",chatrouter);
+app.use("/api/notification",notificationRouter);
 
 //socket io
 io.on('connection', (socket) => {
@@ -40,34 +42,23 @@ io.on('connection', (socket) => {
         console.log(`Socket ${socket.id} joined room ${eventId}`);
     });
 
-    // socket.on('leaveEventRoom', (eventId) => {
-    //     socket.leave(eventId);
-    //     console.log(`Socket ${socket.id} left room ${eventId}`);
-    // });
+    socket.on('leaveEventRoom', (eventId) => {
+        socket.leave(eventId);
+        console.log(`Socket ${socket.id} left room ${eventId}`);
+    });
 
     socket.on('sendMsg', (msg) => {
         console.log('Message:', msg);
-        //  const newMessage= new MessageModel({
-        //     eventId: msg.eventId,
-        //     senderName: msg.senderName,
-        //     senderID: msg.userID,
-        //     message: msg.msg,
-        //     type: msg.type,
-        //     time: msg.time
-        //   });
-        // newMessage.save();
+         const newMessage= new MessageModel({
+            eventId: msg.eventId,
+            senderName: msg.senderName,
+            senderID: msg.userID,
+            message: msg.msg,
+            time: msg.time
+          });
+        newMessage.save();
         io.to(msg.eventId).emit('serverMsg', {...msg, type: 'otherMsg'});
         console.log({...msg, type: 'otherMsg'});
-
-        // const newMessageEmitted = new MessageModel({
-        //     eventId: msg.eventId,
-        //     senderName: msg.senderName,
-        //     senderID: msg.userID,
-        //     message: msg.msg,
-        //     type: 'otherMsg',
-        //     time:msg.time // Assuming emitted messages have a different type
-        // });
-        // newMessageEmitted.save();
     });
 });
 

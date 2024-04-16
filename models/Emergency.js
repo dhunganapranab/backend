@@ -1,19 +1,24 @@
 import mongoose from 'mongoose';
 
-const messageSchema = new mongoose.Schema({
-  eventId: { 
+const emergencySchema = new mongoose.Schema({
+  eventID: { 
     type: String, 
     required: true },
 
-  senderName: {
+  userName: {
      type: String,
       required: true },
 
-  senderID: {
+  userID: {
       type: String,
       required: true,
   },
 
+  userLocation:{
+    type: String,
+    required: true
+  },
+  
   message: { 
     type: String,
      required: true },
@@ -23,6 +28,6 @@ const messageSchema = new mongoose.Schema({
   required: true}
 });
 
-const MessageModel = mongoose.model('Message', messageSchema);
+const EmergencyModel = mongoose.model('Emergency', emergencySchema);
 
-export default MessageModel;
+export default EmergencyModel;

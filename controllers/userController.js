@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import UserModel from '../models/User.js';
 import EventModel from '../models/Event.js';
+import EmergencyModel from '../models/Emergency.js';
 import transporter from '../config/emailConfig.js';
 
 class UserController{
@@ -221,6 +222,44 @@ class UserController{
             console.error("Error:", error);
             res.status(500).json({ message: "Internal Server Error" });
           }
+    }
+
+    static initiateEmergency = async(req, res) => {
+
+        const {eventID, userName, userID, userLocation, message, time} = req.body;
+    
+        const event = await EventModel.findById(eventID);
+        
+        if (!event) {
+          return res.status(404).json({ msg: "Event not found" });
+        }
+        const isJoined = event.members.some(member => member.userID == userID);
+
+        if (!isJoined) {
+            return res.status(400).json({ msg: 'User not found in event.' });
+        }
+        else{
+          if(eventID && userName && userID && userLocation && message && time){
+            try {
+              const newEmergency = new EmergencyModel({
+                eventID: eventID,
+                userName: userName,
+                userID: userID,
+                userLocation: userLocation,
+                message: message,
+                time: time
+              });
+              await newEmergency.save();
+              res.status(201).json({status:"success", msg:"Emergency initiated successfully",...newEmergency._doc});
+          }
+          catch(error) {
+            console.log(error);
+            res.status(500).send({"status":"failed", "message":"Internal server error"});
+          }
+        } else{
+            res.status(400).send({"status":"failed", "message":"All fields are required"});
+        }
+      }
     }
 
 }
