@@ -2,11 +2,11 @@ import express from "express";
 import  jwt  from "jsonwebtoken";
 const userrouter = express.Router();
 import UserController from "../controllers/userController.js";
-import {checkUserAuth,auth} from "../middlewares/auth-middleware.js"; 
+import {auth} from "../middlewares/auth-middleware.js"; 
 import UserModel from "../models/User.js";
 
 // Route Level Middleware - To Protect Route
-userrouter.use("/changepassword",checkUserAuth);
+// userrouter.use("/changepassword",checkUserAuth);
 
 //public routes
 userrouter.post("/register",UserController.userRegistration);
@@ -15,8 +15,10 @@ userrouter.post("/send-reset-pass-email",UserController.sendResetPassEmail);
 userrouter.post("/reset-password/:id/:token",UserController.userPasswordReset);
 
 //protected routes
-userrouter.post("/changepassword",UserController.changeUserPassword);
+userrouter.put("/:userId/updateProfile",UserController.updateUserDetails);
+userrouter.put("/:userId/changepassword",UserController.changeUserPassword);
 userrouter.post("/joinevent",UserController.joinEvent);
+userrouter.post("/:eventId/leaveevent",UserController.leaveEvent);
 userrouter.get("/:userId/myevent",UserController.getMyEvent);
 userrouter.get("/createdEvent/:userId",UserController.createdEventDetails);
 userrouter.post("/initiateEmergency",UserController.initiateEmergency);

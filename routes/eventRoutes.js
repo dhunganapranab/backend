@@ -9,5 +9,6 @@ eventrouter.get("/:eventId/memberdetails",EventController.getMembers);
 eventrouter.post("/addRouteDetails/:eventId",EventController.createRoute);
 eventrouter.get("/:eventId/routedetails",EventController.getRouteDetails);
 eventrouter.delete("/:eventId/members/:memberId",EventController.kickMember);
-
+eventrouter.get("/emergencies/:eventID",EventController.getEmergency);
+eventrouter.get("/emergencyDetail/:emergencyId",EventController.getEmergencyDetails);
 export default eventrouter;

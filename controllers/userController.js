@@ -84,21 +84,64 @@ class UserController{
         }
     }
 
-    static changeUserPassword = async(req,res) =>{
+    static updateUserDetails = async (req, res) => {
+        const userId = req.params.userId;
+        const { name, email, dob } = req.body;
+        try {
+            const user = await UserModel.findById(userId);
+            if (!user) {
+                return res.status(404).json({ msg: "User not found!!" });
+            }
+            const token = jwt.sign({userID:user._id},process.env.JWT_SECRET_KEY, {expiresIn: '14d'});
+            // Update user details
+            user.fullname = name;
+            user.email = email;
+            user.dateOfBirth = dob;
+            await user.save();
+    
+            res.status(200).json({token:token, ...user._doc});
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server Error" });
+        }
+    };
+    
 
-        const{password} =req.body;
-
-        if(password){
+    static changeUserPassword = async (req, res) => {
+        const userId = req.params.userId;
+        const { oldPassword, newPassword } = req.body;
+    
+        try {
+            const user = await UserModel.findById(userId);
+            if (!user) {
+                return res.status(404).json({ msg: "User not found!!" });
+            } 
+    
+            // Check if oldPassword is provided
+            if (!oldPassword) {
+                return res.status(400).json({ status: "failed", msg: "Old password is required" });
+            }
+    
+            // Compare the old password hash with the provided old password
+            const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+            if (!isOldPasswordValid) {
+                return res.status(400).json({ status: "failed", msg: "Old password is incorrect!!" });
+            }
+    
+            // Hash the new password
             const salt = await bcrypt.genSalt(10);
-            const newhashPassword = await bcrypt.hash(password,salt);
-
-            await UserModel.findByIdAndUpdate(req.user._id,{$set:{password: newhashPassword}});
-            
-            res.send({"status":"success","message":"password changed.."})
-        }else{
-            res.send({"status":"failed","message":"password shouldn't be empty"})
+            const newHashPassword = await bcrypt.hash(newPassword, salt);
+    
+            // Update the password in the database
+            await UserModel.findByIdAndUpdate(userId, { $set: { password: newHashPassword } });
+    
+            res.status(200).json({ status: "success", msg: "Your password has been changed successfully" });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server Error" });
         }
     }
+    
     
 
     static sendResetPassEmail = async(req,res) =>{
@@ -184,6 +227,36 @@ class UserController{
         }
     }
 
+    static leaveEvent = async(req, res) => {
+        const { userID } = req.body;
+        const { eventId } = req.params;
+    
+        try {
+            const event = await EventModel.findOne({ _id: eventId });
+            const user = await UserModel.findOne({_id: userID});
+            if (!event) {
+                return res.status(404).json({ msg: 'Event not found' });
+            }
+
+            if(!user) {
+                return res.status(404).json({ msg: 'User not found' });
+            }
+    
+            const memberIndex = event.members.findIndex(member => member.userID == userID);
+            if (memberIndex === -1) {
+                return res.status(400).json({ msg: 'You are not a member of this event' });
+            }
+    
+            event.members.splice(memberIndex, 1); // Remove the member from the event
+            await event.save();
+    
+            res.status(200).json({ msg: 'Successfully left the event' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+
     static getMyEvent = async(req, res) => {
         try {
             const userId = req.params.userId;
@@ -224,44 +297,43 @@ class UserController{
           }
     }
 
-    static initiateEmergency = async(req, res) => {
-
-        const {eventID, userName, userID, userLocation, message, time} = req.body;
+    static initiateEmergency = async (req, res) => {
+        const { eventID, userName, userID, userLocation, message, time } = req.body;
     
-        const event = await EventModel.findById(eventID);
-        
-        if (!event) {
-          return res.status(404).json({ msg: "Event not found" });
-        }
-        const isJoined = event.members.some(member => member.userID == userID);
-
-        if (!isJoined) {
-            return res.status(400).json({ msg: 'User not found in event.' });
-        }
-        else{
-          if(eventID && userName && userID && userLocation && message && time){
-            try {
-              const newEmergency = new EmergencyModel({
-                eventID: eventID,
-                userName: userName,
-                userID: userID,
-                userLocation: userLocation,
-                message: message,
-                time: time
-              });
-              await newEmergency.save();
-              res.status(201).json({status:"success", msg:"Emergency initiated successfully",...newEmergency._doc});
-          }
-          catch(error) {
+        try {
+            const event = await EventModel.findById(eventID);
+    
+            if (!event) {
+                return res.status(404).json({ msg: "Event not found" });
+            }
+    
+            const isJoined = event.members.some(member => member.userID === userID);
+            const isCreator = event.creatorID == userID; // Check if the user is the creator of the event
+    
+            if (!isJoined && !isCreator) { // Check if the user is neither joined nor the creator
+                return res.status(400).json({ msg: 'User not authorized.' });
+            }
+    
+            if (eventID && userName && userID && userLocation && message && time) {
+                const newEmergency = new EmergencyModel({
+                    eventID: eventID,
+                    userName: userName,
+                    userID: userID,
+                    userLocation: userLocation,
+                    message: message,
+                    time: time
+                });
+    
+                await newEmergency.save();
+                res.status(201).json({ status: "success", msg: "Emergency initiated successfully", ...newEmergency._doc });
+            } else {
+                res.status(400).send({ status: "failed", message: "All fields are required" });
+            }
+        } catch (error) {
             console.log(error);
-            res.status(500).send({"status":"failed", "message":"Internal server error"});
-          }
-        } else{
-            res.status(400).send({"status":"failed", "message":"All fields are required"});
+            res.status(500).send({ status: "failed", message: "Internal server error" });
         }
-      }
     }
-
-}
+}    
 
 export default UserController;

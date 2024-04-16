@@ -1,4 +1,5 @@
 import EventModel from "../models/Event.js";
+import EmergencyModel from "../models/Emergency.js";
 
 class EventController{
 
@@ -43,12 +44,15 @@ class EventController{
           }
         }
 
+
     static eventDetails = async (req, res) =>{
         const{eventID} = req.body;
         const event = await EventModel.findOne({_id: eventID});
 
         if(event){
             res.status(200).json({...event._doc})
+        } else{
+          res.status(404).json({msg:"Event not found"});
         }
     }
 
@@ -144,6 +148,39 @@ class EventController{
         console.error('Error fetching route details:', error);
         res.status(500).json({ error: 'Internal server error' });
       }
+  }
+
+  static getEmergency = async(req,res) => {
+    const eventID = req.params.eventID;
+    try {
+      // Find all emergencies with the given eventID
+      const emergencies = await EmergencyModel.find({ eventID: eventID });
+  
+      if (emergencies.length === 0) {
+        return res.status(404).json({ msg: 'No emergencies found for the event.' });
+      }
+  
+      res.status(200).json(emergencies);
+    } catch (error) {
+      console.error('Error fetching emergencies:', error);
+      res.status(500).json({ msg: 'Internal server error' });
+    }
+  }
+
+  static getEmergencyDetails = async (req,res) => {
+    try {
+      const emergencyId = req.params.emergencyId;
+      const emergency = await EmergencyModel.findById(emergencyId);
+      
+      if (!emergency) {
+        return res.status(404).json({ message: 'Emergency not found' });
+      }
+  
+      res.status(200).json(emergency);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   }
 
 }
