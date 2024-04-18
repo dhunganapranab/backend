@@ -183,6 +183,23 @@ class EventController{
     }
   }
 
+  static getEventRating = async(req,res) =>{
+    try {
+      const eventId = req.params.eventId;
+      const event = await EventModel.findById(eventId);
+  
+      if (!event) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      const ratings = event.ratings;
+      // Return the ratings for the event
+      res.status(200).json(ratings);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  }
+
 }
 
 export default EventController;

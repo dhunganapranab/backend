@@ -21,6 +21,7 @@ userrouter.post("/joinevent",UserController.joinEvent);
 userrouter.post("/:eventId/leaveevent",UserController.leaveEvent);
 userrouter.get("/:userId/myevent",UserController.getMyEvent);
 userrouter.get("/createdEvent/:userId",UserController.createdEventDetails);
+userrouter.post("/:eventId/rateEvent",UserController.rateEvent);
 userrouter.post("/initiateEmergency",UserController.initiateEmergency);
 userrouter.post("/tokenIsValid",async(req,res) => {
 try {
@@ -43,6 +44,10 @@ userrouter.get("/",auth,async(req,res) => {
     res.json({...user._doc, token: req.token});
 })
 
+userrouter.get(`/reset-password/:id/:token`, (req, res) =>{
+    const { id, token } = req.params;
+    res.render('reset-password',{ id, token });
+})
 
 
 

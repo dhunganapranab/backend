@@ -20,7 +20,13 @@ const io = new Server(httpServer);
 
 //cors policy
 app.use(cors());
+app.use(express.urlencoded({ extended: false }));
 
+// Set EJS as the view engine
+app.set('view engine', 'ejs');
+app.use(express.static('public'));
+
+app.get
 //Database Connection
 connectDB(DB_URL);
 

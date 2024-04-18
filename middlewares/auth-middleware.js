@@ -41,4 +41,4 @@ const auth = async(req, res, next) => {
     }
 };
 
-export {checkUserAuth,auth};
+export {auth};

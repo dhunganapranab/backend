@@ -146,31 +146,37 @@ class UserController{
 
     static sendResetPassEmail = async(req,res) =>{
         const {email} = req.body;
-        if(email){
-            const user = await UserModel.findOne({email:email})
-            if(user) {
-                const secret = user._id + process.env.JWT_SECRET_KEY;
-                const token = jwt.sign({userID:user._id}, secret , {expiresIn:'1m'})
-                const link = `http://127.0.0.1:3000/api/user/reset/${user._id}/${token}`
-                
-                //send email
-                let info = await transporter.sendMail({
-                    from: process.env.EMAIL_FROM,
-                    to: user.email,
-                    subject:`Biker's Junction- Password Reset Link`,
-                    html:`<a href=${link} >Click here</a> to reset your password.`
-                })
-
-
-                res.send({"status":"success","message":"Email for resetting password has been sent."});
-
+        try{
+            if(email){
+                const user = await UserModel.findOne({email:email})
+                if(user) {
+                    const secret = user._id + process.env.JWT_SECRET_KEY;
+                    const token = jwt.sign({userID:user._id}, secret , {expiresIn:'3m'})
+                    const link = `http://localhost:3000/api/user/reset-password/${user._id}/${token}`
+                    
+                    //send email
+                    await transporter.sendMail({
+                        from: process.env.EMAIL_FROM,
+                        to: user.email,
+                        subject:`Biker's Junction- Password Reset Link`,
+                        html:`<a href=${link} >Click here</a> to reset your password.`
+                    })
+    
+    
+                    res.status(200).json({status:"success",msg:"Email for resetting password has been sent."});
+    
+                }else{
+                    res.status(400).json({status:"failed",msg:"Email don't exist"});
+    
+                }
             }else{
-                res.send({"status":"failed","message":"Email don't exist"});
-
+               res.status(401).json({status:"failed",msg:"email is required"});
             }
-        }else{
-            res.send({"status":"failed","message":"email is required."});
+        }catch(error){
+            console.log(error);
+            res.status(500).json({msg:"Server error"});
         }
+        
     }
 
     static userPasswordReset = async(req,res) => {
@@ -185,7 +191,8 @@ class UserController{
                 const newhashPassword = await bcrypt.hash(password,salt);
     
                 await UserModel.findByIdAndUpdate(user._id,{$set:{password: newhashPassword}});
-                res.send({"status":"success","message":"password changed successfully"});
+                res.render('passwordSucessMsg');
+                console.log("password changed successfully");
 
             }else{
                 res.send({"status":"failed","message":"password required"});
@@ -194,38 +201,43 @@ class UserController{
            
         }catch(error){
             console.log(error);
-            res.send({"status":"failed","message":"Invalid token"})
+            res.render('passwordResetErrorMsg');
         }
 
     }
 
-    static joinEvent = async(req,res) => {
+    static joinEvent = async (req, res) => {
         const { eventId, name, email, userID } = req.body;
     
         try {
-            const event = await EventModel.findOne({_id: eventId});
+            const event = await EventModel.findOne({ _id: eventId });
             if (!event) {
                 return res.status(404).json({ msg: 'Event not found' });
             }
-
+    
             const isJoined = event.members.some(member => member.userID == userID);
             if (isJoined) {
-                return res.status(400).json({ msg: 'You are already in the event. See your events in my evnts section.' });
+                return res.status(400).json({ msg: 'You are already in the event. See your events in my events section.' });
             }
-            else{if(eventId && name && email && userID){
+    
+            if (event.members.length >= event.allowedParticipants) {
+                return res.status(400).json({ msg: 'Event is full. Cannot join.' });
+            }
+    
+            if (eventId && name && email && userID) {
                 event.members.push({ name, email, userID });
-                await event.save(); 
+                await event.save();
                 res.status(200).json(event.members);
             } else {
                 return res.status(400).json({ msg: "All fields are required" });
-            }}
-            
-            
+            }
+    
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Server error" });
         }
     }
+    
 
     static leaveEvent = async(req, res) => {
         const { userID } = req.body;
@@ -334,6 +346,43 @@ class UserController{
             res.status(500).send({ status: "failed", message: "Internal server error" });
         }
     }
-}    
+
+    static rateEvent = async(req, res) =>{
+        const { eventId } = req.params;
+        const { rating, reviewMessage, userName, userID } = req.body;
+      
+        try {
+          // Find the event by eventId
+          const event = await EventModel.findById(eventId);
+      
+          if (!event) {
+            return res.status(404).json({ msg: "Event not found" });
+          }
+      
+          // Check if the user has already given a rating
+          const existingRating = event.ratings.find(
+            (r) => r.userID.toString() === userID
+          );
+          if (existingRating) {
+            return res
+              .status(400)
+              .json({ msg: "You have already rated and submitted review for this event. You can do it only one time!!" });
+          }
+      
+          // Add the rating and review to the event
+          event.ratings.push({ rating, reviewMessage, userName, userID });
+      
+          // Save the updated event
+          await event.save();
+      
+          res.status(200).json({
+            msg: "Rating and review added successfully",
+          });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ msg: "Server error" });
+        }
+    }
+}   
 
 export default UserController;
