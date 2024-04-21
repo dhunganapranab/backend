@@ -19,10 +19,12 @@ userrouter.put("/:userId/updateProfile",UserController.updateUserDetails);
 userrouter.put("/:userId/changepassword",UserController.changeUserPassword);
 userrouter.post("/joinevent",UserController.joinEvent);
 userrouter.post("/:eventId/leaveevent",UserController.leaveEvent);
+userrouter.post("/:eventId/kickMember",UserController.leaveEvent);
 userrouter.get("/:userId/myevent",UserController.getMyEvent);
 userrouter.get("/createdEvent/:userId",UserController.createdEventDetails);
 userrouter.post("/:eventId/rateEvent",UserController.rateEvent);
 userrouter.post("/initiateEmergency",UserController.initiateEmergency);
+userrouter.delete("/dismissEmergency/:emergencyId",UserController.dismissEmergency);
 userrouter.post("/tokenIsValid",async(req,res) => {
 try {
     const token = req.header('userToken');

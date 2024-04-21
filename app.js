@@ -10,6 +10,7 @@ import {Server} from 'socket.io';
 import chatrouter from './routes/messageRoute.js';
 import notificationRouter from './routes/notificationRoutes.js';
 import MessageModel from './models/Message.js';
+import adminrouter from './routes/adminRoutes.js';
 
 
 const app = express();
@@ -24,7 +25,6 @@ app.use(express.urlencoded({ extended: false }));
 
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
-app.use(express.static('public'));
 
 app.get
 //Database Connection
@@ -37,6 +37,7 @@ app.use(express.json());
 app.use("/api/user",userrouter);
 app.use("/api/events",eventrouter);
 app.use("/api/chat",chatrouter);
+app.use("/api/admin",adminrouter);
 app.use("/api/notification",notificationRouter);
 
 //socket io

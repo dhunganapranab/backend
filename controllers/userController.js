@@ -15,7 +15,7 @@ class UserController{
 
        if (user){
 
-        return res.status(400).json({status:"failed", msg:"Email already exists"});
+        return res.status(400).json({status:"failed", msg:"Registeration failed!!\nEmail already taken.\nPlease enter another email"});
 
        } else{
 
@@ -35,7 +35,6 @@ class UserController{
                 })
                 await newUser.save();
 
-                //Generate JWT token
 
                 return res.status(201).json({status:"passed",msg :"User registered sucessfully."});
 
@@ -68,10 +67,10 @@ class UserController{
                         console.log("user has logged in successfully",token, user.fullname);
 
                     }else{
-                        return res.status(401).json({status:"failed",msg:"Provided credentials are wrong."});
+                        return res.status(401).json({status:"failed",msg:"Provided credentials are wrong!!"});
                     }
                 }else{
-                    return res.status(404).json({status:"failed",msg:"user not found."});
+                    return res.status(404).json({status:"failed",msg:"Provided credentials are wrong!!"});
                 }
 
             }else{
@@ -102,7 +101,7 @@ class UserController{
             res.status(200).json({token:token, ...user._doc});
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: "Server Error" });
+            res.status(500).json({ msg: "Error occured while loggin in try again later." });
         }
     };
     
@@ -151,7 +150,7 @@ class UserController{
                 const user = await UserModel.findOne({email:email})
                 if(user) {
                     const secret = user._id + process.env.JWT_SECRET_KEY;
-                    const token = jwt.sign({userID:user._id}, secret , {expiresIn:'3m'})
+                    const token = jwt.sign({userID:user._id}, secret , {expiresIn:'5m'})
                     const link = `http://localhost:3000/api/user/reset-password/${user._id}/${token}`
                     
                     //send email
@@ -163,10 +162,10 @@ class UserController{
                     })
     
     
-                    res.status(200).json({status:"success",msg:"Email for resetting password has been sent."});
+                    res.status(200).json({status:"success",msg:`Email for resetting password has been sent to ${email}.`});
     
                 }else{
-                    res.status(400).json({status:"failed",msg:"Email don't exist"});
+                    res.status(400).json({status:"failed",msg:"Email is not registered in the system!!\nEnter valid email."});
     
                 }
             }else{
@@ -181,11 +180,11 @@ class UserController{
 
     static userPasswordReset = async(req,res) => {
         const{password} = req.body
-        const {id, token} =req.params
+        const {id, token} = req.params
         const user = await UserModel.findById(id)
         const new_secret = user._id + process.env.JWT_SECRET_KEY
         try{
-            const a =jwt.verify(token, new_secret)
+            const verifyToken =jwt.verify(token, new_secret)
             if(password){
                 const salt = await bcrypt.genSalt(10);
                 const newhashPassword = await bcrypt.hash(password,salt);
@@ -238,7 +237,6 @@ class UserController{
         }
     }
     
-
     static leaveEvent = async(req, res) => {
         const { userID } = req.body;
         const { eventId } = req.params;
@@ -344,6 +342,27 @@ class UserController{
         } catch (error) {
             console.log(error);
             res.status(500).send({ status: "failed", message: "Internal server error" });
+        }
+    }
+
+    static dismissEmergency = async (req,res) =>{
+        const { emergencyId } = req.params;
+
+        try {
+            // Find the emergency by emergencyId
+            const emergency = await EmergencyModel.findById(emergencyId);
+
+            if (!emergency) {
+                return res.status(404).json({ msg: 'Emergency detail not found' });
+            }
+
+            // Delete the emergency detail
+            await EmergencyModel.findByIdAndDelete(emergencyId);
+
+            res.status(200).json({ msg: 'Emergency detail successfully dismissed' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ msg: 'Server error' });
         }
     }
 

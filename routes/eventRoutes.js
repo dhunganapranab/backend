@@ -8,7 +8,7 @@ eventrouter.post("/eventDetails",EventController.eventDetails);
 eventrouter.get("/:eventId/memberdetails",EventController.getMembers);
 eventrouter.post("/addRouteDetails/:eventId",EventController.createRoute);
 eventrouter.get("/:eventId/routedetails",EventController.getRouteDetails);
-eventrouter.delete("/:eventId/members/:memberId",EventController.kickMember);
+eventrouter.delete("/:eventId/kickmembers/:memberId",EventController.kickMember);
 eventrouter.get("/emergencies/:eventID",EventController.getEmergency);
 eventrouter.get("/emergencyDetail/:emergencyId",EventController.getEmergencyDetails);
 eventrouter.get("/:eventId/ratings",EventController.getEventRating);
